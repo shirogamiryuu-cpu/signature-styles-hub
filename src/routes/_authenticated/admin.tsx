@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
 
-const nav = [
+const nav: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/barbers", label: "Barbers", icon: Users },
   { to: "/admin/styles", label: "Hairstyles", icon: Sparkles },
@@ -13,7 +13,7 @@ const nav = [
   { to: "/admin/register", label: "Haircut Register", icon: ClipboardList },
   { to: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { to: "/admin/business", label: "Business Info", icon: Building2 },
-] as const;
+];
 
 function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });

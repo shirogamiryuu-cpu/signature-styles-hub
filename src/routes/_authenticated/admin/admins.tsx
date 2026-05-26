@@ -84,14 +84,24 @@ function AdminsPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
             <div>
-              <Label>Email</Label>
-              <Input type="email" placeholder="newadmin@signature.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label>Google account email</Label>
+              <Input type="email" placeholder="name@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-            <Button onClick={() => createMut.mutate()} disabled={!email || createMut.isPending} className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Button
+              onClick={() => {
+                if (!/@(gmail\.com|googlemail\.com)$/i.test(email.trim())) {
+                  toast.error("Please enter a Google account (gmail.com).");
+                  return;
+                }
+                createMut.mutate();
+              }}
+              disabled={!email || createMut.isPending}
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
+            >
               {createMut.isPending ? "Creating…" : "Create admin"}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">A temporary password will be generated. The new admin should sign in and change it immediately.</p>
+          <p className="text-xs text-muted-foreground">Only Google accounts (gmail.com) are accepted so admins can sign in with Google. A temporary password is also generated for email/password login.</p>
 
           {issued && (
             <div className="rounded-md border border-accent/40 bg-accent/5 p-4">

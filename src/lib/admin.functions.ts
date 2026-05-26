@@ -47,7 +47,19 @@ export const listAdmins = createServerFn({ method: "GET" })
 export const createAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ email: z.string().email().max(255) }).parse(input),
+    z
+      .object({
+        email: z
+          .string()
+          .email()
+          .max(255)
+          .refine(
+            (e) => /@(gmail\.com|googlemail\.com)$/i.test(e.trim()),
+            "Admin email must be a Google account (gmail.com)",
+          )
+          .transform((e) => e.trim().toLowerCase()),
+      })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus } from "lucide-react";
+import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus, Info } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin/admins")({ component: AdminsPage });

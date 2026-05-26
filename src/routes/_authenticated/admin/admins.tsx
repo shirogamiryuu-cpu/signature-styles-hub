@@ -27,7 +27,7 @@ function AdminsPage() {
   });
 
   const [email, setEmail] = useState("");
-  const [issued, setIssued] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [issued, setIssued] = useState<{ email: string } | null>(null);
 
   const createMut = useMutation({
     mutationFn: () => create({ data: { email } }),
@@ -35,7 +35,7 @@ function AdminsPage() {
       setIssued(r);
       setEmail("");
       qc.invalidateQueries({ queryKey: ["admins"] });
-      toast.success("Admin created. Share the temporary password securely.");
+      toast.success(`${r.email} is now an admin.`);
     },
     onError: (e: any) => toast.error(e.message),
   });

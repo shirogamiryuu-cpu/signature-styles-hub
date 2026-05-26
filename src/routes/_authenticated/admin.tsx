@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
 import { signOut } from "@/hooks/use-auth";
-import { Scissors, LayoutDashboard, Users, Sparkles, CalendarClock, ClipboardList, MessageSquare, Building2, LogOut } from "lucide-react";
+import { Scissors, LayoutDashboard, Users, Sparkles, CalendarClock, ClipboardList, MessageSquare, Building2, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
@@ -13,6 +13,7 @@ const nav: { to: string; label: string; icon: any; exact?: boolean }[] = [
   { to: "/admin/register", label: "Haircut Register", icon: ClipboardList },
   { to: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { to: "/admin/business", label: "Business Info", icon: Building2 },
+  { to: "/admin/admins", label: "Admins & Password", icon: ShieldCheck },
 ];
 
 function AdminLayout() {

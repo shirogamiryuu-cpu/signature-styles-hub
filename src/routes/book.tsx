@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
+import { notifyAppointment } from "@/lib/telegram.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -26,6 +28,7 @@ export const Route = createFileRoute("/book")({
 function BookPage() {
   const search = useSearch({ from: "/book" });
   const navigate = useNavigate();
+  const notify = useServerFn(notifyAppointment);
   const [step, setStep] = useState<1 | 2 | 3>(search.style ? (search.barber ? 3 : 2) : 1);
   const [styleId, setStyleId] = useState<string | null>(search.style ?? null);
   const [barberId, setBarberId] = useState<string | null>(search.barber ?? null);
@@ -65,7 +68,7 @@ function BookPage() {
     }
     setSubmitting(true);
     const dt = new Date(`${date}T${time}:00`);
-    const { error } = await supabase.from("appointments").insert({
+    const { data: inserted, error } = await supabase.from("appointments").insert({
       customer_name: name,
       customer_email: email || null,
       customer_phone: phone,
@@ -74,9 +77,10 @@ function BookPage() {
       style_id: styleId,
       status: "pending",
       notes: notes || null,
-    });
+    }).select("id").single();
+    if (error) { setSubmitting(false); toast.error(error.message); return; }
+    notify({ data: { appointmentId: inserted.id } }).catch(() => {});
     setSubmitting(false);
-    if (error) { toast.error(error.message); return; }
     setDone(true);
   };
 

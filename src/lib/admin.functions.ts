@@ -63,33 +63,36 @@ export const createAdmin = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const tempPassword = generateTempPassword();
 
-    // Find or create user
+    // Only promote users that already exist AND have signed in with Google.
+    // We never create accounts here — that prevents adding random/fake gmails.
     const { data: list } = await supabaseAdmin.auth.admin.listUsers();
-    let user = list?.users?.find(
+    const user = list?.users?.find(
       (u) => u.email?.toLowerCase() === data.email.toLowerCase(),
     );
 
     if (!user) {
-      const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
-        email: data.email,
-        password: tempPassword,
-        email_confirm: true,
-      });
-      if (error || !created.user) throw new Error(error?.message ?? "Failed to create user");
-      user = created.user;
-    } else {
-      // Reset password to temporary
-      await supabaseAdmin.auth.admin.updateUserById(user.id, { password: tempPassword });
+      throw new Error(
+        "This Google account hasn't signed in yet. Ask them to open the admin login page and click 'Continue with Google' once — then add them here.",
+      );
     }
 
-    // Grant admin role (ignore conflict)
+    const usedGoogle =
+      (user.app_metadata as any)?.provider === "google" ||
+      ((user.app_metadata as any)?.providers as string[] | undefined)?.includes("google") ||
+      user.identities?.some((i) => i.provider === "google");
+
+    if (!usedGoogle) {
+      throw new Error(
+        "This account exists but hasn't signed in with Google. Ask them to use 'Continue with Google' on the login page first.",
+      );
+    }
+
     await supabaseAdmin
       .from("user_roles")
       .upsert({ user_id: user.id, role: "admin" }, { onConflict: "user_id,role" });
 
-    return { email: data.email, tempPassword };
+    return { email: data.email };
   });
 
 export const deleteAdmin = createServerFn({ method: "POST" })

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus } from "lucide-react";
+import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus, Info } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin/admins")({ component: AdminsPage });
@@ -27,7 +27,7 @@ function AdminsPage() {
   });
 
   const [email, setEmail] = useState("");
-  const [issued, setIssued] = useState<{ email: string; tempPassword: string } | null>(null);
+  const [issued, setIssued] = useState<{ email: string } | null>(null);
 
   const createMut = useMutation({
     mutationFn: () => create({ data: { email } }),
@@ -35,7 +35,7 @@ function AdminsPage() {
       setIssued(r);
       setEmail("");
       qc.invalidateQueries({ queryKey: ["admins"] });
-      toast.success("Admin created. Share the temporary password securely.");
+      toast.success(`${r.email} is now an admin.`);
     },
     onError: (e: any) => toast.error(e.message),
   });
@@ -101,18 +101,16 @@ function AdminsPage() {
               {createMut.isPending ? "Creating…" : "Create admin"}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground">Only Google accounts (gmail.com) are accepted so admins can sign in with Google. A temporary password is also generated for email/password login.</p>
+          <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+            <p>
+              The person must first open the admin login page and click <strong>Continue with Google</strong> at least once. Then enter their Gmail here to grant admin access. Random or non-existent Gmail addresses will be rejected.
+            </p>
+          </div>
 
           {issued && (
-            <div className="rounded-md border border-accent/40 bg-accent/5 p-4">
-              <p className="text-sm">Share these credentials with <strong>{issued.email}</strong>:</p>
-              <div className="mt-2 flex items-center gap-2">
-                <code className="flex-1 rounded bg-background px-3 py-2 text-sm">{issued.tempPassword}</code>
-                <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(issued.tempPassword); toast.success("Copied"); }}>
-                  <Copy className="h-4 w-4" />
-                </Button>
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">This password is shown only once. Save it before closing.</p>
+            <div className="rounded-md border border-accent/40 bg-accent/5 p-4 text-sm">
+              <strong>{issued.email}</strong> has been granted admin access. They can now sign in with Google.
             </div>
           )}
         </CardContent>

@@ -78,7 +78,14 @@ function BookPage() {
       status: "pending",
       notes: notes || null,
     }).select("id").single();
-    if (error) { setSubmitting(false); toast.error(error.message); return; }
+    if (error) {
+      setSubmitting(false);
+      const msg = /conflicts with another appointment/i.test(error.message)
+        ? "That time slot is already booked for this barber. Please pick another time."
+        : error.message;
+      toast.error(msg);
+      return;
+    }
     notify({ data: { appointmentId: inserted.id } }).catch(() => {});
     setSubmitting(false);
     setDone(true);

@@ -44,6 +44,70 @@ export const listAdmins = createServerFn({ method: "GET" })
     });
   });
 
+export const verifyAdminEmail = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        email: z
+          .string()
+          .email()
+          .max(255)
+          .transform((e) => e.trim().toLowerCase()),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context.userId);
+
+    const isGmail = /@(gmail\.com|googlemail\.com)$/i.test(data.email);
+    if (!isGmail) {
+      return { ok: false as const, reason: "Not a Google account (gmail.com)." };
+    }
+
+    const { data: list } = await supabaseAdmin.auth.admin.listUsers();
+    const user = list?.users?.find(
+      (u) => u.email?.toLowerCase() === data.email,
+    );
+
+    if (!user) {
+      return {
+        ok: false as const,
+        reason:
+          "No account with this email exists yet. Ask them to sign in once with Google on the admin login page.",
+      };
+    }
+
+    const usedGoogle =
+      (user.app_metadata as any)?.provider === "google" ||
+      ((user.app_metadata as any)?.providers as string[] | undefined)?.includes("google") ||
+      user.identities?.some((i) => i.provider === "google");
+
+    if (!usedGoogle) {
+      return {
+        ok: false as const,
+        reason: "Account exists but has never signed in with Google.",
+      };
+    }
+
+    // Already an admin?
+    const { data: existingRole } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    return {
+      ok: true as const,
+      email: data.email,
+      userId: user.id,
+      alreadyAdmin: !!existingRole,
+      lastSignInAt: user.last_sign_in_at ?? null,
+    };
+  });
+
+
 export const createAdmin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>

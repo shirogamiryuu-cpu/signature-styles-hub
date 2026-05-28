@@ -270,6 +270,7 @@ export type Database = {
           id: string
           is_approved: boolean
           rating: number
+          user_id: string | null
         }
         Insert: {
           appointment_id?: string | null
@@ -279,6 +280,7 @@ export type Database = {
           id?: string
           is_approved?: boolean
           rating: number
+          user_id?: string | null
         }
         Update: {
           appointment_id?: string | null
@@ -288,6 +290,7 @@ export type Database = {
           id?: string
           is_approved?: boolean
           rating?: number
+          user_id?: string | null
         }
         Relationships: [
           {

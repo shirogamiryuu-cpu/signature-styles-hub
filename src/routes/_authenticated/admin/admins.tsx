@@ -2,13 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAdmins, createAdmin, deleteAdmin, changeMyPassword } from "@/lib/admin.functions";
+import { listAdmins, createAdmin, deleteAdmin, changeMyPassword, verifyAdminEmail } from "@/lib/admin.functions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus, Info } from "lucide-react";
+import { Copy, Trash2, ShieldCheck, KeyRound, UserPlus, Info, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/admin/admins")({ component: AdminsPage });
@@ -20,6 +20,7 @@ function AdminsPage() {
   const create = useServerFn(createAdmin);
   const remove = useServerFn(deleteAdmin);
   const changePw = useServerFn(changeMyPassword);
+  const verify = useServerFn(verifyAdminEmail);
 
   const { data: admins, isLoading } = useQuery({
     queryKey: ["admins"],
@@ -28,17 +29,38 @@ function AdminsPage() {
 
   const [email, setEmail] = useState("");
   const [issued, setIssued] = useState<{ email: string } | null>(null);
+  type VerifyState =
+    | { status: "idle" }
+    | { status: "checking" }
+    | { status: "ok"; email: string; alreadyAdmin: boolean; lastSignInAt: string | null }
+    | { status: "error"; reason: string };
+  const [verifyState, setVerifyState] = useState<VerifyState>({ status: "idle" });
+
+  const verifyMut = useMutation({
+    mutationFn: () => verify({ data: { email } }),
+    onMutate: () => setVerifyState({ status: "checking" }),
+    onSuccess: (r) => {
+      if (r.ok) {
+        setVerifyState({ status: "ok", email: r.email, alreadyAdmin: r.alreadyAdmin, lastSignInAt: r.lastSignInAt });
+      } else {
+        setVerifyState({ status: "error", reason: r.reason });
+      }
+    },
+    onError: (e: any) => setVerifyState({ status: "error", reason: e.message }),
+  });
 
   const createMut = useMutation({
     mutationFn: () => create({ data: { email } }),
     onSuccess: (r) => {
       setIssued(r);
       setEmail("");
+      setVerifyState({ status: "idle" });
       qc.invalidateQueries({ queryKey: ["admins"] });
       toast.success(`${r.email} is now an admin.`);
     },
     onError: (e: any) => toast.error(e.message),
   });
+
 
   const removeMut = useMutation({
     mutationFn: (userId: string) => remove({ data: { userId } }),
@@ -82,29 +104,63 @@ function AdminsPage() {
             <UserPlus className="h-5 w-5 text-accent" />
             <h2 className="font-display text-2xl">Add new admin</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto] sm:items-end">
             <div>
               <Label>Google account email</Label>
-              <Input type="email" placeholder="name@gmail.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Input
+                type="email"
+                placeholder="name@gmail.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setVerifyState({ status: "idle" }); }}
+              />
             </div>
             <Button
+              variant="outline"
               onClick={() => {
-                if (!/@(gmail\.com|googlemail\.com)$/i.test(email.trim())) {
-                  toast.error("Please enter a Google account (gmail.com).");
-                  return;
-                }
-                createMut.mutate();
+                if (!email) return toast.error("Enter an email first.");
+                verifyMut.mutate();
               }}
-              disabled={!email || createMut.isPending}
+              disabled={!email || verifyMut.isPending}
+            >
+              {verifyMut.isPending ? <><Loader2 className="mr-1 h-4 w-4 animate-spin"/>Verifying…</> : "Verify account"}
+            </Button>
+            <Button
+              onClick={() => createMut.mutate()}
+              disabled={
+                verifyState.status !== "ok" ||
+                verifyState.alreadyAdmin ||
+                createMut.isPending
+              }
               className="bg-accent text-accent-foreground hover:bg-accent/90"
             >
-              {createMut.isPending ? "Creating…" : "Create admin"}
+              {createMut.isPending ? "Promoting…" : "Grant admin"}
             </Button>
           </div>
+
+          {verifyState.status === "ok" && (
+            <div className="flex items-start gap-2 rounded-md border border-green-500/30 bg-green-500/5 p-3 text-sm">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+              <div>
+                <p><strong>{verifyState.email}</strong> is a verified Google account.</p>
+                <p className="text-xs text-muted-foreground">
+                  Last sign-in: {verifyState.lastSignInAt ? new Date(verifyState.lastSignInAt).toLocaleString() : "—"}
+                  {verifyState.alreadyAdmin && " · Already an admin."}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {verifyState.status === "error" && (
+            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm">
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+              <p>{verifyState.reason}</p>
+            </div>
+          )}
+
           <div className="flex items-start gap-2 rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
             <p>
-              The person must first open the admin login page and click <strong>Continue with Google</strong> at least once. Then enter their Gmail here to grant admin access. Random or non-existent Gmail addresses will be rejected.
+              The person must first open the admin login page and click <strong>Continue with Google</strong> at least once. Use <strong>Verify account</strong> to confirm — only then will <strong>Grant admin</strong> activate.
             </p>
           </div>
 
@@ -113,6 +169,7 @@ function AdminsPage() {
               <strong>{issued.email}</strong> has been granted admin access. They can now sign in with Google.
             </div>
           )}
+
         </CardContent>
       </Card>
 

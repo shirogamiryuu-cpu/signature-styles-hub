@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
-import { signOut } from "@/hooks/use-auth";
+import { signOut, useAuth } from "@/hooks/use-auth";
 import { Scissors, LayoutDashboard, Users, Sparkles, CalendarClock, ClipboardList, MessageSquare, Building2, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
 
@@ -18,6 +19,7 @@ const nav: { to: string; label: string; icon: any; exact?: boolean }[] = [
 
 function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useAuth();
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground flex flex-col">
@@ -46,7 +48,12 @@ function AdminLayout() {
           <Link to="/" className="mt-1 block px-3 py-1.5 text-xs opacity-70 hover:opacity-100">View site →</Link>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto"><div className="p-8"><Outlet /></div></main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/80 px-6 py-2 backdrop-blur">
+          {user && <NotificationBell audience="admin" userId={user.id} />}
+        </div>
+        <div className="p-8"><Outlet /></div>
+      </main>
     </div>
   );
 }

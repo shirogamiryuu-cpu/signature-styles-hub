@@ -1,7 +1,8 @@
 import { createFileRoute, Outlet, Link, useRouterState } from "@tanstack/react-router";
-import { signOut } from "@/hooks/use-auth";
+import { signOut, useAuth } from "@/hooks/use-auth";
 import { Scissors, LayoutDashboard, Users, Sparkles, CalendarClock, ClipboardList, MessageSquare, Building2, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const Route = createFileRoute("/_authenticated/admin")({ component: AdminLayout });
 

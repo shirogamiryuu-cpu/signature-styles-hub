@@ -48,7 +48,12 @@ function AdminLayout() {
           <Link to="/" className="mt-1 block px-3 py-1.5 text-xs opacity-70 hover:opacity-100">View site →</Link>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto"><div className="p-8"><Outlet /></div></main>
+      <main className="flex-1 overflow-y-auto">
+        <div className="sticky top-0 z-30 flex items-center justify-end gap-2 border-b bg-background/80 px-6 py-2 backdrop-blur">
+          {user && <NotificationBell audience="admin" userId={user.id} />}
+        </div>
+        <div className="p-8"><Outlet /></div>
+      </main>
     </div>
   );
 }

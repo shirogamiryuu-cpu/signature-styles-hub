@@ -26,6 +26,7 @@ export type Database = {
           notes: string | null
           status: Database["public"]["Enums"]["appointment_status"]
           style_id: string | null
+          user_id: string | null
         }
         Insert: {
           appointment_datetime: string
@@ -38,6 +39,7 @@ export type Database = {
           notes?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           style_id?: string | null
+          user_id?: string | null
         }
         Update: {
           appointment_datetime?: string
@@ -50,6 +52,7 @@ export type Database = {
           notes?: string | null
           status?: Database["public"]["Enums"]["appointment_status"]
           style_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -260,6 +263,50 @@ export type Database = {
           style_image_url?: string | null
         }
         Relationships: []
+      }
+      notifications: {
+        Row: {
+          appointment_id: string | null
+          audience: string
+          body: string | null
+          created_at: string
+          id: string
+          is_read: boolean
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          appointment_id?: string | null
+          audience: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          appointment_id?: string | null
+          audience?: string
+          body?: string | null
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "appointments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {

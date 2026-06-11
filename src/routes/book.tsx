@@ -68,6 +68,7 @@ function BookPage() {
     }
     setSubmitting(true);
     const dt = new Date(`${date}T${time}:00`);
+    const { data: { user } } = await supabase.auth.getUser();
     const { data: inserted, error } = await supabase.from("appointments").insert({
       customer_name: name,
       customer_email: email || null,
@@ -77,6 +78,7 @@ function BookPage() {
       style_id: styleId,
       status: "pending",
       notes: notes || null,
+      user_id: user?.id ?? null,
     }).select("id").single();
     if (error) {
       setSubmitting(false);

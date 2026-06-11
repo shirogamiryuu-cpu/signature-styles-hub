@@ -19,6 +19,7 @@ const nav: { to: string; label: string; icon: any; exact?: boolean }[] = [
 
 function AdminLayout() {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const { user } = useAuth();
   return (
     <div className="min-h-screen flex bg-background">
       <aside className="w-64 shrink-0 border-r bg-sidebar text-sidebar-foreground flex flex-col">
